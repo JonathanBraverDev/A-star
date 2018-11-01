@@ -25,9 +25,9 @@
     ((= X (sub1 (length (first B)))) (findInBoard target B 0 (add1 Y)))
     (else (findInBoard target B (add1 X) Y))))
 
-(define (outOfBounds? X Y)
+(define (outOfBounds? B X Y)
   (cond
-    ((or (> 0 X) (> 0 Y) (< 2 X) (< 2 Y)) #F)
+    ((or (> 0 X) (> 0 Y) (< (sub1 (length (first B))) X) (< (sub1 (length B)) Y)) #F)
     (else #T)))
 
 (define  (tryAllMoves B)
@@ -50,22 +50,22 @@
 
 (define (moveLeft B emptyTilePos)
   (cond
-    ((not (outOfBounds? (add1 (getX emptyTilePos)) (getY emptyTilePos))) #F)
+    ((not (outOfBounds? B (add1 (getX emptyTilePos)) (getY emptyTilePos))) #F)
     (else (updateBoard (updateBoard B (getX emptyTilePos) (getY emptyTilePos) (getTileAt B (list (add1 (getX emptyTilePos)) (getY emptyTilePos)))) (add1 (getX emptyTilePos)) (getY emptyTilePos) '0))))
 
 (define (moveRigth B emptyTilePos)
   (cond
-    ((not (outOfBounds? (sub1 (getX emptyTilePos)) (getY emptyTilePos))) #F)
+    ((not (outOfBounds? B (sub1 (getX emptyTilePos)) (getY emptyTilePos))) #F)
     (else (updateBoard (updateBoard B (getX emptyTilePos) (getY emptyTilePos) (getTileAt B (list (sub1 (getX emptyTilePos)) (getY emptyTilePos)))) (sub1 (getX emptyTilePos)) (getY emptyTilePos) '0))))
 
 (define (moveUp B emptyTilePos)
   (cond
-    ((not (outOfBounds? (getX emptyTilePos) (sub1 (getY emptyTilePos)))) #F)
+    ((not (outOfBounds? B (getX emptyTilePos) (sub1 (getY emptyTilePos)))) #F)
     (else (updateBoard (updateBoard B (getX emptyTilePos) (getY emptyTilePos) (getTileAt B (list (getX emptyTilePos) (sub1 (getY emptyTilePos))))) (getX emptyTilePos) (sub1 (getY emptyTilePos)) '0))))
 
 (define (moveDown B emptyTilePos)
   (cond
-    ((not (outOfBounds? (getX emptyTilePos) (add1 (getY emptyTilePos)))) #F)
+    ((not (outOfBounds? B (getX emptyTilePos) (add1 (getY emptyTilePos)))) #F)
     (else (updateBoard (updateBoard B (getX emptyTilePos) (getY emptyTilePos) (getTileAt B (list (getX emptyTilePos) (add1 (getY emptyTilePos))))) (getX emptyTilePos) (add1 (getY emptyTilePos)) '0))))
 
 
@@ -127,10 +127,10 @@
     ((equal? input 'd) (println '(press w/a/s/d to move tiles and q when done)) (letPlayeredit2 L (read)))
     (else (println 'wrong...) (letPlayeredit2 L (read)))))
 
-(define  (insertSorted open toInsert)
-  (cond
-    ((empty? open) (cons toInsert open))
-    ()))
+;(define  (insertSorted open toInsert)
+;  (cond
+;    ((empty? open) (cons toInsert open))
+;    ()))
 
 (define (A* open closed)
   (cond
