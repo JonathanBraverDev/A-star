@@ -137,6 +137,10 @@
     ((empty? open) 'FUCK)
     (else '(not yet))))
 
+(general function: (f=w*h+(1-w)*g))
+(greedy: w=1)
+(A*:w=0)
+(lowestCost: w=0)
 
 
 
