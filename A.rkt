@@ -1,6 +1,5 @@
 (define-struct state (board h g parent))
-(define B (list '(1 2 3)  '(4 0 6) '(7 8 5)))
-(define B1 (list '(3 6 1)  '(7 4 2) '(0 8 5)))
+(define B1 (list '(1 2 3)  '(4 5 6) '(7 8 0)))
 
 (define (setUpGame L)
   (list (list (list-ref L 0) (list-ref L 1) (list-ref L 2)) (list (list-ref L 3) (list-ref L 4) (list-ref L 5)) (list (list-ref L 6) (list-ref L 7) (list-ref L 8))))
@@ -30,19 +29,22 @@
     ((or (> 0 X) (> 0 Y) (< (sub1 (length (first B))) X) (< (sub1 (length B)) Y)) #F)
     (else #T)))
 
-(define  (tryAllMoves B)
+(define  (tryAllMoves B) ;for debug
+  (println 'start:)
+  (printBoard B)
+  (println 'L)
   (cond
     ((moveLeft B (findInBoard 0 B 0 0)) (printBoard (moveLeft B (findInBoard 0 B 0 0))) (newline))
     (else (println #F) (newline)))
-  
+  (println 'R)
   (cond
     ((moveRigth B (findInBoard 0 B 0 0)) (printBoard (moveRigth B (findInBoard 0 B 0 0))) (newline))
     (else (println #F) (newline)))
-  
+  (println 'U)
   (cond
     ((moveUp B (findInBoard 0 B 0 0)) (printBoard (moveUp B (findInBoard 0 B 0 0))) (newline))
     (else (println #F) (newline)))
-  
+  (println 'D)
   (cond
     ((moveDown B (findInBoard 0 B 0 0)) (printBoard (moveDown B (findInBoard 0 B 0 0))) (newline))
     (else (println #F) (newline))))
@@ -58,12 +60,12 @@
     ((not (outOfBounds? B (sub1 (getX emptyTilePos)) (getY emptyTilePos))) #F)
     (else (updateBoard (updateBoard B (getX emptyTilePos) (getY emptyTilePos) (getTileAt B (list (sub1 (getX emptyTilePos)) (getY emptyTilePos)))) (sub1 (getX emptyTilePos)) (getY emptyTilePos) '0))))
 
-(define (moveUp B emptyTilePos)
+(define (moveDown B emptyTilePos)
   (cond
     ((not (outOfBounds? B (getX emptyTilePos) (sub1 (getY emptyTilePos)))) #F)
     (else (updateBoard (updateBoard B (getX emptyTilePos) (getY emptyTilePos) (getTileAt B (list (getX emptyTilePos) (sub1 (getY emptyTilePos))))) (getX emptyTilePos) (sub1 (getY emptyTilePos)) '0))))
 
-(define (moveDown B emptyTilePos)
+(define (moveUp B emptyTilePos)
   (cond
     ((not (outOfBounds? B (getX emptyTilePos) (add1 (getY emptyTilePos)))) #F)
     (else (updateBoard (updateBoard B (getX emptyTilePos) (getY emptyTilePos) (getTileAt B (list (getX emptyTilePos) (add1 (getY emptyTilePos))))) (getX emptyTilePos) (add1 (getY emptyTilePos)) '0))))
@@ -112,39 +114,37 @@
   (list-ref (list-ref B (getY pos)) (getX pos)))
 
 
-(define (letPlayeredit L)
-  (printBoard (setUpGame L))
+(define (letPlayeredit B)
+  (printBoard B)
   (newline)
   (println '(press w/a/s/d to move tiles and q when done))
-  (letPlayeredit2 L (read)))
+  (letPlayeredit2 B (findInBoard 0 B 0 0) (read)))
 
-(define (letPlayeredit2 L input)
+(define (letPlayeredit2 B emptyTilePos input)
+  (printBoard B)
   (cond
-    ((equal? input 'q) L)
-    ((equal? input 'w) (println '(press w/a/s/d to move tiles and q when done)) (letPlayeredit2 L (read)))
-    ((equal? input 'a) (println '(press w/a/s/d to move tiles and q when done)) (letPlayeredit2 L (read)))
-    ((equal? input 's) (println '(press w/a/s/d to move tiles and q when done)) (letPlayeredit2 L (read)))
-    ((equal? input 'd) (println '(press w/a/s/d to move tiles and q when done)) (letPlayeredit2 L (read)))
-    (else (println 'wrong...) (letPlayeredit2 L (read)))))
+    ((equal? input 'q) B)
+    ((and (equal? input 'w) (< (getY emptyTilePos) 2)) (println '(press w/a/s/d to move tiles and q when done)) (letPlayeredit2 (moveUp B emptyTilePos) (list (first emptyTilePos) (sub1 (second emptyTilePos))) (read)))
+    ((and (equal? input 'a) (< (getY emptyTilePos) 2)) (println '(press w/a/s/d to move tiles and q when done)) (letPlayeredit2 (moveLeft B emptyTilePos) (list (sub1 (first emptyTilePos)) (second emptyTilePos)) (read)))
+    ((and (equal? input 's) (> (getY emptyTilePos) 0)) (println '(press w/a/s/d to move tiles and q when done)) (letPlayeredit2 (moveDown B emptyTilePos) (list (first emptyTilePos) (add1 (second emptyTilePos))) (read)))
+    ((and (equal? input 'd) (> (getY emptyTilePos) 0)) (println '(press w/a/s/d to move tiles and q when done)) (letPlayeredit2 (moveRigth B emptyTilePos) (list (add1 (first emptyTilePos)) (second emptyTilePos)) (read)))
+    (else (println 'wrong...) (letPlayeredit2 B emptyTilePos (read)))))
+ 
+(define  (insertSorted open toInsert) ;WIP
+  (cond
+    ((empty? open) (cons toInsert open))
+    (else 1)))
 
-;(define  (insertSorted open toInsert)
-;  (cond
-;    ((empty? open) (cons toInsert open))
-;    ()))
-
-(define (A* open closed)
+(define (A* open closed) ;WIP
   (cond
     ((empty? open) 'FUCK)
     (else '(not yet))))
 
-(general function: (f=w*h+(1-w)*g))
-(greedy: w=1)
-(A*:w=0)
-(lowestCost: w=0)
+;(general function: (f=w*h+(1-w)*g))
+;(greedy: w=1)
+;(A*:w=0.5)
+;(lowestCost: w=0)
 
-
-
-
-
-
-
+(define (start)
+  (printBoard (letPlayeredit B1)))
+  
