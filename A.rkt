@@ -1,4 +1,4 @@
-(define-struct state (board h g parent))
+(define-struct state (board F parent))
 (define B1 (list '(1 2 3)  '(4 5 6) '(7 8 0)))
 
 (define (setUpGame L)
@@ -23,6 +23,12 @@
     ((> Y (sub1 (length B))) #F)
     ((= X (sub1 (length (first B)))) (findInBoard target B 0 (add1 Y)))
     (else (findInBoard target B (add1 X) Y))))
+
+(define (findInList target L)
+  (cond
+    ((empty? L) #F)
+    ((sameState? (first L) target) #T)
+    (else (findInList target (rest L)))))
 
 (define (outOfBounds? B X Y)
   (cond
@@ -91,7 +97,7 @@
   (cond
     ((= Y (length B)) 0)
     ((= X (sub1 (length (first B)))) (+ (distanceFromTarget B (list X Y)) (totalDistance B 0 (add1 Y))))
-    (else (+ (distanceFromTarget B (list X Y)) (totalDistance B (add1 X) Y))))) 
+    (else (+ (distanceFromTarget B (list X Y)) (totalDistance B (add1 X) Y)))))
 
 
 (define (updateBoard B Xpos Ypos input)
@@ -129,16 +135,26 @@
     ((and (equal? input 's) (> (getY emptyTilePos) 0)) (println '(press w/a/s/d to move tiles and q when done)) (letPlayeredit2 (moveDown B emptyTilePos) (list (first emptyTilePos) (add1 (second emptyTilePos))) (read)))
     ((and (equal? input 'd) (> (getY emptyTilePos) 0)) (println '(press w/a/s/d to move tiles and q when done)) (letPlayeredit2 (moveRigth B emptyTilePos) (list (add1 (first emptyTilePos)) (second emptyTilePos)) (read)))
     (else (println 'wrong...) (letPlayeredit2 B emptyTilePos (read)))))
- 
-(define  (insertSorted open toInsert) ;WIP
-  (cond
-    ((empty? open) (cons toInsert open))
-    (else 1)))
 
-(define (A* open closed) ;WIP
+(define (sortByMinF statesL W)
+  (cond
+    
+
+(define (sort closed toSortL newMoves) ;WIP
+  (cond
+    ((empty? toSortL) (list newMoves closed))
+    ((not (first toSortL)) (sort closed (rest toSortL)))
+    ((not (findInList (first toSortL))) (sort (cons (first toSortL) closed) (rest toSortL) (cons (first toSortL) newMoves)))
+    (else 'ERR-sort)))
+
+(define (A* open closed W) ;WIP
   (cond
     ((empty? open) 'FUCK)
-    (else '(not yet))))
+    ((equal? (first open) B1) 'DONE)
+    (else (A* (sortByMinF (cons (first (sort closed toSortL newMoves)) open)  0 W) (second (sort closed toSortL newMoves)) W))))
+
+(define (calcF W h g)
+  (+ (* W h) (* (- 1 W) g)))
 
 ;(general function: (f=w*h+(1-w)*g))
 ;(greedy: w=1)
@@ -147,4 +163,3 @@
 
 (define (start)
   (printBoard (letPlayeredit B1)))
-  
