@@ -1,5 +1,6 @@
+(define-struct F (g h))
 (define-struct state (board F parent))
-(define B1 (list '(1 2 3)  '(4 5 6) '(7 8 0)))
+(define B1 (list '(1 2 3)  '(4 0 6) '(7 8 5)))
 
 (define (setUpGame L)
   (list (list (list-ref L 0) (list-ref L 1) (list-ref L 2)) (list (list-ref L 3) (list-ref L 4) (list-ref L 5)) (list (list-ref L 6) (list-ref L 7) (list-ref L 8))))
@@ -27,13 +28,13 @@
 (define (findInList target L)
   (cond
     ((empty? L) #F)
-    ((sameState? (first L) target) #T)
+    ((equal? (first L) target) #T)
     (else (findInList target (rest L)))))
 
 (define (outOfBounds? B X Y)
   (cond
-    ((or (> 0 X) (> 0 Y) (< (sub1 (length (first B))) X) (< (sub1 (length B)) Y)) #F)
-    (else #T)))
+    ((or (> 0 X) (> 0 Y) (< (sub1 (length (first B))) X) (< (sub1 (length B)) Y)) #T)
+    (else #F)))
 
 (define  (tryAllMoves B) ;for debug
   (println 'start:)
@@ -56,25 +57,28 @@
     (else (println #F) (newline))))
 
 
-(define (moveLeft B emptyTilePos)
+(define (moveLeft B state emptyTilePos)
   (cond
-    ((not (outOfBounds? B (add1 (getX emptyTilePos)) (getY emptyTilePos))) #F)
-    (else (updateBoard (updateBoard B (getX emptyTilePos) (getY emptyTilePos) (getTileAt B (list (add1 (getX emptyTilePos)) (getY emptyTilePos)))) (add1 (getX emptyTilePos)) (getY emptyTilePos) '0))))
+    ((outOfBounds? B (add1 (getX emptyTilePos)) (getY emptyTilePos)) #F)
+    (else (stateBuilder (updateBoard (updateBoard B (getX emptyTilePos) (getY emptyTilePos) (getTileAt B (list (add1 (getX emptyTilePos)) (getY emptyTilePos)))) (add1 (getX emptyTilePos)) (getY emptyTilePos) '0) state))))
 
-(define (moveRigth B emptyTilePos)
+(define (moveRigth B state emptyTilePos)
   (cond
-    ((not (outOfBounds? B (sub1 (getX emptyTilePos)) (getY emptyTilePos))) #F)
-    (else (updateBoard (updateBoard B (getX emptyTilePos) (getY emptyTilePos) (getTileAt B (list (sub1 (getX emptyTilePos)) (getY emptyTilePos)))) (sub1 (getX emptyTilePos)) (getY emptyTilePos) '0))))
+    ((outOfBounds? B (sub1 (getX emptyTilePos)) (getY emptyTilePos)) #F)
+    (else (stateBuilder (updateBoard (updateBoard B (getX emptyTilePos) (getY emptyTilePos) (getTileAt B (list (sub1 (getX emptyTilePos)) (getY emptyTilePos)))) (sub1 (getX emptyTilePos)) (getY emptyTilePos) '0) state))))
 
-(define (moveDown B emptyTilePos)
+(define (moveDown B state emptyTilePos)
   (cond
-    ((not (outOfBounds? B (getX emptyTilePos) (sub1 (getY emptyTilePos)))) #F)
-    (else (updateBoard (updateBoard B (getX emptyTilePos) (getY emptyTilePos) (getTileAt B (list (getX emptyTilePos) (sub1 (getY emptyTilePos))))) (getX emptyTilePos) (sub1 (getY emptyTilePos)) '0))))
+    ((outOfBounds? B (getX emptyTilePos) (sub1 (getY emptyTilePos))) #F)
+    (else (stateBuilder (updateBoard (updateBoard B (getX emptyTilePos) (getY emptyTilePos) (getTileAt B (list (getX emptyTilePos) (sub1 (getY emptyTilePos))))) (getX emptyTilePos) (sub1 (getY emptyTilePos)) '0) state))))
 
-(define (moveUp B emptyTilePos)
+(define (moveUp B state emptyTilePos)
   (cond
-    ((not (outOfBounds? B (getX emptyTilePos) (add1 (getY emptyTilePos)))) #F)
-    (else (updateBoard (updateBoard B (getX emptyTilePos) (getY emptyTilePos) (getTileAt B (list (getX emptyTilePos) (add1 (getY emptyTilePos))))) (getX emptyTilePos) (add1 (getY emptyTilePos)) '0))))
+    ((outOfBounds? B (getX emptyTilePos) (add1 (getY emptyTilePos))) #F)
+    (else (stateBuilder (updateBoard (updateBoard B (getX emptyTilePos) (getY emptyTilePos) (getTileAt B (list (getX emptyTilePos) (add1 (getY emptyTilePos))))) (getX emptyTilePos) (add1 (getY emptyTilePos)) '0) state))))
+
+(define (stateBuilder B state)
+  (make-state B (make-F (F-g (state-F state)) (totalDistance B 0 0)) state))
 
 
 (define (getDestPosFor B pos)
@@ -119,42 +123,44 @@
 (define (getTileAt B pos)
   (list-ref (list-ref B (getY pos)) (getX pos)))
 
-
-(define (letPlayeredit B)
-  (printBoard B)
-  (newline)
-  (println '(press w/a/s/d to move tiles and q when done))
-  (letPlayeredit2 B (findInBoard 0 B 0 0) (read)))
-
-(define (letPlayeredit2 B emptyTilePos input)
-  (printBoard B)
+(define (sortByMinF statesL index W)
   (cond
-    ((equal? input 'q) B)
-    ((and (equal? input 'w) (< (getY emptyTilePos) 2)) (println '(press w/a/s/d to move tiles and q when done)) (letPlayeredit2 (moveUp B emptyTilePos) (list (first emptyTilePos) (sub1 (second emptyTilePos))) (read)))
-    ((and (equal? input 'a) (< (getY emptyTilePos) 2)) (println '(press w/a/s/d to move tiles and q when done)) (letPlayeredit2 (moveLeft B emptyTilePos) (list (sub1 (first emptyTilePos)) (second emptyTilePos)) (read)))
-    ((and (equal? input 's) (> (getY emptyTilePos) 0)) (println '(press w/a/s/d to move tiles and q when done)) (letPlayeredit2 (moveDown B emptyTilePos) (list (first emptyTilePos) (add1 (second emptyTilePos))) (read)))
-    ((and (equal? input 'd) (> (getY emptyTilePos) 0)) (println '(press w/a/s/d to move tiles and q when done)) (letPlayeredit2 (moveRigth B emptyTilePos) (list (add1 (first emptyTilePos)) (second emptyTilePos)) (read)))
-    (else (println 'wrong...) (letPlayeredit2 B emptyTilePos (read)))))
+    ((= index (length statesL)) statesL)
+    ((> (calcF (first statesL)) (calcF (second statesL))) (replace statesL index (add1 index)))
+    (else 1)))
 
-(define (sortByMinF statesL W)
+(define (replace L index1 index2)
+  (append (append (listUntill L index1 0) (list (list-ref L index2))) (cons (list-ref L index1) (listFrom L index2))))
+
+(define (listUntill L index counter)
   (cond
-    
+    ((= index 0) '())
+    ((= (sub1 (length L)) index) (rest L))
+    ((= counter index) '())
+    (else (cons (list-ref L counter) (listUntill L index (add1 counter))))))
 
-(define (sort closed toSortL newMoves) ;WIP
+(define (listFrom L index)
+  (cond 
+    ((= index 0) L)
+    ((= (length L) index) '())
+    (else (cons (list-ref L index) (listFrom L (add1 index))))))
+
+(define (sort2 closed toSortL newMoves) ;WIP
   (cond
     ((empty? toSortL) (list newMoves closed))
-    ((not (first toSortL)) (sort closed (rest toSortL)))
-    ((not (findInList (first toSortL))) (sort (cons (first toSortL) closed) (rest toSortL) (cons (first toSortL) newMoves)))
+    ((not (first toSortL)) (sort2 closed (rest toSortL)))
+    ((not (findInList (first toSortL) closed)) (sort2 (cons (first toSortL) closed) (rest toSortL) (cons (first toSortL) newMoves)))
     (else 'ERR-sort)))
 
 (define (A* open closed W) ;WIP
+  (print open)
   (cond
-    ((empty? open) 'FUCK)
-    ((equal? (first open) B1) 'DONE)
-    (else (A* (sortByMinF (cons (first (sort closed toSortL newMoves)) open)  0 W) (second (sort closed toSortL newMoves)) W))))
+    ((empty? open) (list '(0 0 0) '(0 0 0) '(0 0 0)))
+    ((equal? (totalDistance (state-board (first open)) 0 0) 0) (state-board (first open)))
+    (else (A* (sortByMinF (cons (first (sort2 closed (list (moveUp (state-board (first open)) (first open) (findInBoard 0 (state-board (first open)) 0 0)) (moveDown (state-board (first open)) (first open) (findInBoard 0 (state-board (first open)) 0 0)) (moveLeft (state-board (first open)) (first open) (findInBoard 0 (state-board (first open)) 0 0)) (moveRigth (state-board (first open)) (first open) (findInBoard 0 (state-board (first open)) 0 0))) '())) open) W) (second (sort2 closed (list (moveUp (state-board (first open)) (first open) (findInBoard 0 (state-board (first open)) 0 0)) (moveDown (state-board (first open)) (first open) (findInBoard 0 (state-board (first open)) 0 0)) (moveLeft (state-board (first open)) (first open) (findInBoard 0 (state-board (first open)) 0 0)) (moveRigth (state-board (first open)) (first open) (findInBoard 0 (state-board (first open)) 0 0))) '())) W))))
 
-(define (calcF W h g)
-  (+ (* W h) (* (- 1 W) g)))
+(define (calcF state)
+  (+ (* W (F-h (state-F state))) (* (- 1 W) (F-g (state-F state)))))
 
 ;(general function: (f=w*h+(1-w)*g))
 ;(greedy: w=1)
@@ -162,4 +168,4 @@
 ;(lowestCost: w=0)
 
 (define (start)
-  (printBoard (letPlayeredit B1)))
+  (printBoard (A* (list (make-state B1 (make-F 0 (totalDistance B1 0 0)) 'none)) '() 0.5)))
