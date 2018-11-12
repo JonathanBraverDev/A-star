@@ -1,6 +1,8 @@
+(require racket/list)
+
 (define-struct F (g h))
 (define-struct state (board F parent))
-(define B1 (list '(1 2 3)  '(0 5 6) '(4 7 8)))
+(define B1 (list '(1 2 0)  '(4 5 3) '(7 8 6)))
 
 
 (define (setUpGame L)
@@ -145,36 +147,43 @@
 
 (define (sortByMinF statesL index timesSorted W)
   (cond
-    ((= index (length statesL)) statesL)
-    ((= index (length statesL)) (sortByMinF statesL 0(add1 timesSorted) W))
-    ((> (calcF (first statesL) W) (calcF (second statesL) W)) (sortByMinF (replace statesL index (add1 index)) (add1 index) timesSorted W))
+    ((empty? (rest statesL)) statesL)
+    ((= timesSorted (length statesL)) statesL)
+    ((= index (sub1 (length statesL))) (sortByMinF statesL 0 (add1 timesSorted) W))
+    ((= (F-h (state-F (list-ref statesL index))) 0) (list (list-ref statesL index)))
+    ((> (calcF (list-ref statesL index) W) (calcF (list-ref statesL (add1 index)) W)) (sortByMinF (replace statesL index (add1 index)) (add1 index) timesSorted W))
     (else (sortByMinF statesL (add1 index) timesSorted W))))
 
 
-(define (replace L index1 index2)
-  (append (append (listUntill L index1 0) (list (list-ref L index2))) (cons (list-ref L index1) (listFrom L index2))))
+(define (replace lst one-pos two-pos)
+    (define one (list-ref lst one-pos))
+    (define two (list-ref lst two-pos))
+    (list-set (list-set lst one-pos two) two-pos one))
 
-
-(define (listUntill L index counter)
-  (cond
-    ((= index 0) '())
-    ((= (sub1 (length L)) index) (rest L))
-    ((= counter index) '())
-    (else (cons (list-ref L counter) (listUntill L index (add1 counter))))))
-
-
-(define (listFrom L index)
-  (cond 
-    ((= index 0) L)
-    ((= (length L) index) '())
-    (else (cons (list-ref L index) (listFrom L (add1 index))))))
+;(define (replace L index1 index2)
+;  (append (append (listUntill L index1 0) (list (list-ref L index2))) (cons (list-ref L index1) (listFrom L index2))))
+;
+;
+;(define (listUntill L index counter)
+;  (cond
+;    ((= index 0) '())
+;    ((= (sub1 (length L)) index) (rest L))
+;    ((= counter index) '())
+;    (else (cons (list-ref L counter) (listUntill L index (add1 counter))))))
+;
+;
+;(define (listFrom L index)
+;  (cond 
+;    ((= index 0) L)
+;    ((= (length L) index) '())
+;    (else (cons (list-ref L index) (listFrom L (add1 index))))))
 
 
 (define (sort2 closed toSortL newMoves) ;WIP
   (cond
-    ((empty? toSortL) (list newMoves closed))
+    ((empty? toSortL) newMoves)
     ((not (first toSortL)) (sort2 closed (rest toSortL) newMoves))
-    ((not (findInList (first toSortL) closed)) (sort2 (cons (first toSortL) closed) (rest toSortL) (cons (first toSortL) newMoves)))
+    ((not (findInList (first toSortL) closed)) (sort2 closed (rest toSortL) (cons (first toSortL) newMoves)))
     (else (sort2 closed (rest toSortL) newMoves))))
 
 
@@ -188,7 +197,16 @@
   (cond
     ((empty? open) (list '(0 0 0) '(0 0 0) '(0 0 0)))
     ((= (F-h (state-F (first open))) 0) (state-board (first open)))
-    (else (A* (sortByMinF (first (cons (first (sort2 closed (list (moveUp (state-board (first open)) (first open) (findInBoard 0 (state-board (first open)) 0 0)) (moveDown (state-board (first open)) (first open) (findInBoard 0 (state-board (first open)) 0 0)) (moveLeft (state-board (first open)) (first open) (findInBoard 0 (state-board (first open)) 0 0)) (moveRigth (state-board (first open)) (first open) (findInBoard 0 (state-board (first open)) 0 0))) '())) open)) 0 0 W) (second (sort2 closed (list (moveUp (state-board (first open)) (first open) (findInBoard 0 (state-board (first open)) 0 0)) (moveDown (state-board (first open)) (first open) (findInBoard 0 (state-board (first open)) 0 0)) (moveLeft (state-board (first open)) (first open) (findInBoard 0 (state-board (first open)) 0 0)) (moveRigth (state-board (first open)) (first open) (findInBoard 0 (state-board (first open)) 0 0))) '())) W))))
+    (else (A* (sortByMinF (first (cons (sort2 closed (list
+                                               (moveUp (state-board (first open)) (first open) (findInBoard 0 (state-board (first open)) 0 0))
+                                               (moveDown (state-board (first open)) (first open) (findInBoard 0 (state-board (first open)) 0 0))
+                                               (moveLeft (state-board (first open)) (first open) (findInBoard 0 (state-board (first open)) 0 0))
+                                               (moveRigth (state-board (first open)) (first open) (findInBoard 0 (state-board (first open)) 0 0))) '()) open)) 0 0 W)
+              (append (sort2 closed (list
+                      (moveUp (state-board (first open)) (first open) (findInBoard 0 (state-board (first open)) 0 0))
+                      (moveDown (state-board (first open)) (first open) (findInBoard 0 (state-board (first open)) 0 0))
+                      (moveLeft (state-board (first open)) (first open) (findInBoard 0 (state-board (first open)) 0 0))
+                      (moveRigth (state-board (first open)) (first open) (findInBoard 0 (state-board (first open)) 0 0))) '()) closed) W))))
 
 
 (define (calcF state W)
